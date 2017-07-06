@@ -1,0 +1,125 @@
+############################################################
+# PATH
+############################################################
+if [ -n "$1" ]; then
+	proj_name=$1
+else
+	echo "common.in setting"
+	exit 1
+fi
+
+root_dir=/home1/irteam/naver/project
+proj_dir=$root_dir/$proj_name
+
+SCRIPT=$proj_dir
+SRC=$proj_dir/src
+BIN=$proj_dir/bin
+LIB=$proj_dir/lib
+DATA=$proj_dir/data
+RESULT=/home1/irteam/naver/example_result
+LOG=$proj_dir/log
+
+#############################################################
+# common setting
+#############################################################
+CDATA=$root_dir/common/data
+L2HOME=$root_dir/common/lib/linguist2-5.10
+
+#############################################################
+# hdfs setting
+#############################################################
+hdfs_dir=/user/jwchoi
+proj_hdfs=$hdfs_dir/${proj_name}
+
+HD_L2HOME=$hdfs_dir/common/lib/linguist2-5.8
+HD_TOTAL_COLL=$hdfs_dir/common/total_coll
+HD_TOTAL_LINE=hdfs://xhdm101.shop.nhnsystem.com:8020/user/irteam/common/total_line
+HD_BCOOKIE_DATA=hdfs://xhdm101.shop.nhnsystem.com:8020/user/irteam/common/totalBcookie_data
+HD_SHOPPINGADCR=hdfs://xhdm101.shop.nhnsystem.com:8020/user/irteam/common/shoppingadcr
+HD_SHOPPINGADCR_DMG=hdfs://xhdm101.shop.nhnsystem.com:8020/user/irteam/common/shoppingadcr_dmg
+HD_MALL_CATNM=hdfs://xhdm101.shop.nhnsystem.com:8020/user/irteam/shoptag/mall_catnm
+
+ADCR_RSYNC_SERVER="cgw01.cq::SHOPPINGADCR"
+#ADCR_RSYNC_SERVER=10.25.241.97::clklog
+
+#############################################################
+# hadoop setting
+#############################################################
+export JAVA_HOME=/usr/
+source /home1/irteam/naver/search-env/package/c3_conf/source.me
+export HADOOP_CONF_DIR=$C3_CONF_DIR
+export HADOOP_USER_NAME=jwchoi
+
+H3="$HADOOP_HOME/bin/hdfs --config $C3_CONF_DIR"
+Y3="$HADOOP_HOME/bin/yarn --config $C3_CONF_DIR"
+HADOOP=$HADOOP_HOME/bin/hadoop
+STREAM_JAR=$HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-2.7.1.jar
+
+REDUCEOPT='-D mapreduce.job.queuename=small -D mapred.reduce.tasks=100 -D mapred.reduce.slowstart.completed.maps=0.98'
+REDUCEOPT_50='-D mapreduce.job.queuename=small -D mapred.reduce.tasks=50 -D mapred.reduce.slowstart.completed.maps=0.90'
+REDUCEOPT_50_COMP='-D mapreduce.job.queuename=small -D mapred.reduce.tasks=50 -D mapred.reduce.slowstart.completed.maps=1.0 -D mapreduce.reduce.shuffle.parallelcopies=5'
+SEQUENCEOPT='-outputformat SequenceFile'
+REDUCEOPT_1='-D mapreduce.job.queuename=small -D mapred.reduce.tasks=1 -D mapred.reduce.slowstart.completed.maps=0.90'
+COMPRESSOPT='-D mapred.output.compress=true -D mapred.output.compression.codec=org.apache.hadoop.io.compress.GzipCodec'
+SPLIT2MOPT="-D mapred.min.split.size=2097152 -D mapred.map.tasks=500"
+
+#############################################################
+# function
+#############################################################
+hadoop_getmerge()
+{
+	if [ ! -n "$1" ]; then
+		return
+	fi
+
+	outname=`basename $1`
+
+	outpath=$DATA/$outname.txt
+	if [ -n "$2" ]; then
+		outpath=$2
+	fi
+
+	rm $outpath.new || true 
+
+	$HADOOP fs -getmerge $1 $outpath.new
+
+	mv $outpath.new $outpath
+}
+
+hadoop_getmerge_gz()
+{
+	if [ ! -n "$1" ]; then
+		return
+	f
+
+	outname=`basename $1`
+
+	outpath=$DATA/$outname.txt.gz
+	if [ -n "$2" ]; then
+		outpath=$2
+	fi
+
+	rm $outpath.new || true 
+	$HADOOP fs -getmerge $1 $outpath.new
+
+	mv $outpath.new $outpath
+}
+
+#############################################################
+# default setting
+#############################################################
+unset LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT LC_IDENTIFICATION LC_ALL
+
+
+set -e
+onerror() {
+	if [ "$?" != "0" ]; then
+		echo "${0}: line $BASH_LINENO: Call stack: ${FUNCNAME[@]:1}"
+
+			phone_num="01062115241"
+#			/data2/user/parangeyo/mex/mex_sms.py $phone_num "[error] gift_rcmd system error"
+			exit 1
+			fi
+}
+trap onerror EXIT
+
